@@ -125,6 +125,8 @@ libplannerapp_la_SOURCES = 			\
 	$(resource_source)		\
 	$(usage_source)
 
+libplannerapp_la_LIBADD = -lm
+
 gantt_task_source = 			\
 	planner-gantt-background.c	\
 	planner-gantt-background.h	\
