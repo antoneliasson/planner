@@ -2124,7 +2124,7 @@ task_manager_do_forward_pass_helper (MrpTaskManager *manager,
 				assignments = mrp_task_get_assignments (task);
 
 				n = g_list_length (assignments);
-				units = floor (0.5 + 100.0 * (gdouble) work / duration / n);
+				units = floor (100.0 * (gdouble) work / duration / n);
 
 				for (a = assignments; a; a = a->next) {
 					assignment = a->data;
