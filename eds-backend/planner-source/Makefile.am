@@ -1,9 +1,9 @@
-INCLUDES =					\
+AM_CPPFLAGS =					\
 	-I$(top_srcdir)				\
 	-I$(top_builddir)			\
 	$(EDS_BACKEND_CFLAGS)			
 
-%.eplug: %.eplug.in
+.eplug.in.eplug:
 	sed -e 's|\@PLUGINDIR\@|$(plugindir)|' $< > $@
 
 plugin_DATA = org-gnome-planner-source.eplug

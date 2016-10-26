@@ -1,6 +1,6 @@
 SUBDIRS = files
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	-I$(top_srcdir)					\
 	-I$(top_srcdir)/tests				\
 	$(PLANNER_CFLAGS) $(WARN_CFLAGS)		\

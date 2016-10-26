@@ -1,4 +1,4 @@
-INCLUDES = 							\
+AM_CPPFLAGS = 							\
 	-I$(top_srcdir)						\
 	-I$(top_srcdir)/src					\
 	-I$(top_builddir)					\
@@ -11,7 +11,7 @@ INCLUDES = 							\
 	-DDATADIR=\""$(datadir)"\"
 
 if HAVE_PYTHON_PLUGIN
-INCLUDES += $(PYTHON_INCLUDES)
+AM_CPPFLAGS += $(PYTHON_INCLUDES)
 endif
 
 bin_PROGRAMS = planner 

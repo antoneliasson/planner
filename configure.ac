@@ -2,8 +2,10 @@
 # require autoconf 2.54
 AC_PREREQ(2.54)
 
-AC_INIT(AUTHORS)
-AM_INIT_AUTOMAKE(planner, 0.14.6)
+AC_INIT(planner, 0.14.6)
+AC_CONFIG_SRCDIR(src/planner-main.c)
+AM_INIT_AUTOMAKE
+
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 AC_CONFIG_HEADERS(config.h)
 
