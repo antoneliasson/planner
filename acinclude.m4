@@ -1,4 +1,4 @@
-dnl Turn on the additional warnings last, so -Werror doesn't affect other tests.
+dnl Turn on the additional warnings last, so -Werror does not affect other tests.
 
 AC_DEFUN([PLANNER_COMPILE_WARNINGS],[
    if test -f $srcdir/autogen.sh; then
