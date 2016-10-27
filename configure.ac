@@ -31,7 +31,7 @@ AC_PATH_PROG(UPDATE_MIME_DATABASE, update-mime-database, true)
 AC_PATH_PROG(UPDATE_DESKTOP_DATABASE, update-desktop-database, true)
 
 AC_ARG_ENABLE(update-mimedb,
-   AC_HELP_STRING([--disable-update-mimedb],
+   AS_HELP_STRING([--disable-update-mimedb],
                    [disable the update-mime-database after install [default=no]]),,
     enable_update_mimedb=yes)
 AM_CONDITIONAL(ENABLE_UPDATE_MIMEDB, test x$enable_update_mimedb = xyes)
