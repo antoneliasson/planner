@@ -333,9 +333,8 @@ eds-backend/utils/Makefile
 libplanner-1.pc
 ])
 
-AC_OUTPUT([
-data/planner.desktop.in
-])
+AC_CONFIG_FILES([data/planner.desktop.in])
+AC_OUTPUT
 
 echo
 echo "Planner prefix               : $prefix"
