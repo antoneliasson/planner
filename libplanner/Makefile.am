@@ -35,7 +35,8 @@ libplanner_1_la_SOURCES = 			\
 	mrp-property.c				\
 	mrp-time.c				\
 	mrp-error.c				\
-	mrp-paths-gnome.c
+	mrp-paths-gnome.c		\
+	mygmp.c
 
 libplannerinclude_HEADERS = 			\
 	planner.h				\
@@ -54,7 +55,8 @@ libplannerinclude_HEADERS = 			\
 	mrp-types.h				\
 	mrp-time.h				\
 	mrp-error.h				\
-	mrp-paths.h
+	mrp-paths.h				\
+	mygmp.h
 
 libplanner_1_la_LIBADD = $(LIBPLANNER_LIBS) -lm
 
