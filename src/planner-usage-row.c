@@ -696,16 +696,16 @@ static void
 usage_row_update_resources (PlannerUsageRow *row)
 {
 	PlannerUsageRowPriv *priv;
-	gint                  units;
-	gchar                *units_string;
+	gchar                *units_string, *tmp;
 
 	priv = row->priv;
 
-	units = mrp_assignment_get_units (priv->assignment);
-	units_string = g_strdup_printf ("%i%%", units);
+	tmp = mpq_get_str (NULL, 10, mrp_assignment_get_units (priv->assignment));
+	units_string = g_strdup_printf ("%s%%", tmp);
 	pango_layout_set_text (priv->layout, units_string, -1);
 
 	g_free (units_string);
+	free (tmp);
 }
 
 static void
@@ -833,7 +833,7 @@ typedef enum {
 typedef struct {
         date_type type;
         mrptime time;
-        gint units;
+        mpq_t units;
         MrpAssignment *assignment;
         MrpTask *task;
 } Date;
@@ -874,7 +874,7 @@ typedef enum {
 static void
 usage_row_draw_resource_ival (mrptime          start,
                                mrptime          end,
-                               gint             units,
+                               mpq_t             units,
                                RowChunk         chunk,
                                GdkDrawable     *drawable,
                                GnomeCanvasItem *item,
@@ -969,13 +969,13 @@ usage_row_draw_resource_ival (mrptime          start,
                 return;
         }
 
-        if (units == 0) {
+        if (mpq_cmp_si (units, 0, 1) == 0) {
                 gdk_gc_set_foreground (priv->fill_gc, &color_free);
         }
-	else if (units < 100) {
+	else if (mpq_cmp_si (units, 100, 1) < 0) {
                 gdk_gc_set_foreground (priv->fill_gc, &color_underuse);
         }
-	else if (units == 100) {
+	else if (mpq_cmp_si (units, 100, 1) == 0) {
                 gdk_gc_set_foreground (priv->fill_gc, &color_normal);
         } else {
                 gdk_gc_set_foreground (priv->fill_gc, &color_overuse);
@@ -990,13 +990,13 @@ usage_row_draw_resource_ival (mrptime          start,
 				    rr_xend - rr_xstart + 1, rr_yend - rr_ystart + 1);
 	}
 
-        if (units == 0) {
+        if (mpq_cmp_si (units, 0, 1) == 0) {
                 gdk_gc_set_foreground (priv->fill_gc, &color_free_light);
         }
-	else if (units < 100) {
+	else if (mpq_cmp_si (units, 100, 1) < 0) {
                 gdk_gc_set_foreground (priv->fill_gc, &color_underuse_light);
         }
-	else if (units == 100) {
+	else if (mpq_cmp_si (units, 100, 1) == 0) {
                 gdk_gc_set_foreground (priv->fill_gc, &color_normal_light);
         } else {
                 gdk_gc_set_foreground (priv->fill_gc, &color_overuse_light);
@@ -1016,13 +1016,13 @@ usage_row_draw_resource_ival (mrptime          start,
                                rs_xstart, cs_yend);
         }
 
-	if (units == 0) {
+	if (mpq_cmp_si (units, 0, 1) == 0) {
                 gdk_gc_set_foreground (priv->fill_gc, &color_free_dark);
         }
-	else if (units < 100) {
+	else if (mpq_cmp_si (units, 100, 1) < 0) {
                 gdk_gc_set_foreground (priv->fill_gc, &color_underuse_dark);
         }
-	else if (units == 100) {
+	else if (mpq_cmp_si (units, 100, 1) == 0) {
                 gdk_gc_set_foreground (priv->fill_gc, &color_normal_dark);
         } else {
                 gdk_gc_set_foreground (priv->fill_gc, &color_overuse_dark);
@@ -1093,7 +1093,7 @@ usage_row_draw_resource (PlannerUsageRow *row,
         GList         *a, *d;
         Date          *date, *date0, *date1;
         mrptime        work_start, finish, previous_time;
-        gint           units;
+        mpq_t           units;
         RowChunk       chunk;
 
         resource = row->priv->resource;
@@ -1110,26 +1110,26 @@ usage_row_draw_resource (PlannerUsageRow *row,
                 work_start = mrp_task_get_work_start (task);
                 finish = mrp_task_get_finish (task);
 
-		units = mrp_assignment_get_units (assignment);
+		mpq_set (units, mrp_assignment_get_units (assignment));
 
 		date0 = g_new0 (Date, 1);
                 date0->type = START_ASSIGN;
                 date0->time = work_start;
-                date0->units = units;
+                mpq_set (date0->units, units);
                 date0->assignment = assignment;
                 date0->task = task;
 
                 date1 = g_new0 (Date, 1);
                 date1->type = END_ASSIGN;
                 date1->time = finish;
-                date1->units = units;
+                mpq_set (date1->units, units);
                 date1->assignment = assignment;
                 date1->task = task;
                 dates = g_list_insert_sorted (dates, date0, usage_row_date_compare);
                 dates = g_list_insert_sorted (dates, date1, usage_row_date_compare);
         }
 
-        units = 0;
+        mpq_set_si (units, 0, 1);
         previous_time = mrp_project_get_project_start (project);
 
 	root = mrp_project_get_root_task (project);
@@ -1157,9 +1157,9 @@ usage_row_draw_resource (PlannerUsageRow *row,
                 }
 
                 if (date->type == START_ASSIGN) {
-                        units += date->units;
+                        mpq_add (units, units, date->units);
                 } else {
-                        units -= date->units;
+                        mpq_sub (units, units, date->units);
                 }
                 g_free (date);
         }

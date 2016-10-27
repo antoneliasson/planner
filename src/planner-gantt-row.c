@@ -738,7 +738,7 @@ gantt_row_update_resources (PlannerGanttRow *row)
 	gchar          *text = NULL;
 	PangoRectangle  rect;
 	gint            spacing, x;
-	gint            units;
+	mpq_t            units;
 
 	priv = row->priv;
 
@@ -758,7 +758,7 @@ gantt_row_update_resources (PlannerGanttRow *row)
 		resource = l->data;
 
 		assignment = mrp_task_get_assignment (task, resource);
-		units = mrp_assignment_get_units (assignment);
+		mpq_set (units, mrp_assignment_get_units (assignment));
 
 		/* Try short name first. */
 		name = mrp_resource_get_short_name (resource);
@@ -773,8 +773,10 @@ gantt_row_update_resources (PlannerGanttRow *row)
 
 		g_array_append_val (priv->resource_widths, x);
 
-		if (units != 100) {
-			name_unit = g_strdup_printf ("%s [%i]", name, units);
+		if (mpq_cmp_si (units, 100, 1)) {
+			tmp_str = mpq_get_str (NULL, 10, units);
+			name_unit = g_strdup_printf ("%s [%s]", name, tmp_str);
+			free (tmp_str);
 		} else {
 			name_unit = g_strdup_printf ("%s", name);
 		}
@@ -961,8 +963,8 @@ static MrpUnitsInterval *mop_get_next_ival(GList **cur, gint *is_a_gap, GList *s
 		if (md > 0) {
 			buf->start = cur_ival->start - md;
 			buf->end = cur_ival->start;
-			buf->units = 0;
-			buf->units_full = 0;
+			mpq_set_si (buf->units, 0, 1);
+			mpq_set_si (buf->units_full, 0, 1);
 			buf->res_n = 0;
 
 			*is_a_gap = 1;
@@ -993,8 +995,8 @@ static MrpUnitsInterval *mop_get_next_ival(GList **cur, gint *is_a_gap, GList *s
 			if (last_end < cur_ival->start) { /* another gap */
 				buf->start = last_end;
 				buf->end = cur_ival->start;
-				buf->units = 0;
-				buf->units_full = 0;
+				mpq_set_si (buf->units, 0, 1);
+				mpq_set_si (buf->units_full, 0, 1);
 				buf->res_n = 0;
 
 				*is_a_gap = 1;
@@ -1010,8 +1012,8 @@ static MrpUnitsInterval *mop_get_next_ival(GList **cur, gint *is_a_gap, GList *s
 			if (md > 0) {
 				buf->start      = cur_ival->end;
 				buf->end        = cur_ival->end - md + (24*60*60);
-				buf->units = 0;
-				buf->units_full = 0;
+				mpq_set_si (buf->units, 0, 1);
+				mpq_set_si (buf->units_full, 0, 1);
 				buf->res_n = 0;
 
 				*is_a_gap = 1;

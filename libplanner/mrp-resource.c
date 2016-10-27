@@ -32,13 +32,14 @@
 #include "mrp-task.h"
 #include "mrp-resource.h"
 
+#include "mygmp.h"
 
 struct _MrpResourcePriv {
 	gchar           *name;
 	gchar		*short_name;
         MrpGroup        *group;
         MrpResourceType  type;
-        gint             units;
+        mpq_t             units;
         gchar           *email;
         gchar           *note;
 	GList           *assignments;
@@ -168,12 +169,9 @@ resource_class_init (MrpResourceClass *klass)
 
         g_object_class_install_property (object_class,
                                          PROP_UNITS,
-                                         g_param_spec_int ("units",
+                                         g_param_spec_pointer ("units",
                                                            "Units",
                                                            "The amount of units this resource has",
-                                                           -1,
-                                                           G_MAXINT,
-                                                           0,
                                                            G_PARAM_READWRITE));
 
         g_object_class_install_property (object_class,
@@ -342,10 +340,8 @@ resource_set_property (GObject      *object,
 		}
 		break;
 	case PROP_UNITS:
-		i_val = g_value_get_int (value);
-
-		if (priv->units != i_val) {
-			priv->units = i_val;
+		if (mpq_cmp (priv->units, g_value_get_pointer (value))) {
+			mpq_set (priv->units, g_value_get_pointer (value));
 			changed = TRUE;
 		}
 		break;
@@ -448,7 +444,7 @@ resource_get_property (GObject    *object,
 		g_value_set_int (value, priv->type);
 		break;
 	case PROP_UNITS:
-		g_value_set_int (value, priv->units);
+		g_value_set_pointer (value, priv->units);
 		break;
 	case PROP_EMAIL:
 		g_value_set_string (value, priv->email);
@@ -700,7 +696,7 @@ void mrp_resource_set_short_name (MrpResource *resource, const gchar *name)
 void
 mrp_resource_assign (MrpResource *resource,
 		     MrpTask     *task,
-		     gint         units)
+		     mpq_t         units)
 {
 	MrpAssignment   *assignment;
 

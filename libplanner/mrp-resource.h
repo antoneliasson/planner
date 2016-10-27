@@ -65,7 +65,7 @@ void            mrp_resource_set_short_name     (MrpResource     *resource,
 						 const gchar     *short_name);
 void            mrp_resource_assign             (MrpResource     *resource,
 						 MrpTask         *task,
-						 gint             units);
+						 mpq_t             units);
 
 GList *         mrp_resource_get_assignments    (MrpResource     *resource);
 

@@ -180,7 +180,7 @@ mam_get_value (GtkTreeModel *tree_model,
 	MrpAssignment     *assignment;
 	MrpResource       *resource;
         gchar             *str;
-        gint               units;
+        mpq_t               units;
         gfloat             rate;
 
         g_return_if_fail (PLANNER_IS_ASSIGNMENT_MODEL (tree_model));
@@ -202,7 +202,7 @@ mam_get_value (GtkTreeModel *tree_model,
         case RESOURCE_ASSIGNMENT_COL_UNITS:
                 g_object_get (resource, "units", &units, NULL);
                 g_value_init (value, G_TYPE_INT);
-                g_value_set_int (value, units);
+                g_value_set_pointer (value, units);
                 break;
         case RESOURCE_ASSIGNMENT_COL_COST_STD:
                 mrp_object_get (resource, "cost", &rate, NULL);
@@ -226,7 +226,7 @@ mam_get_value (GtkTreeModel *tree_model,
 		g_value_init (value, G_TYPE_INT);
 		assignment = mrp_task_get_assignment (model->priv->task, resource);
 		if (assignment) {
-			g_value_set_int (value, mrp_assignment_get_units (assignment));
+			g_value_set_pointer (value, mrp_assignment_get_units (assignment));
 		} else {
 			g_value_set_int (value, 0);
 		}

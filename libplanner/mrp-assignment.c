@@ -28,11 +28,13 @@
 #include "mrp-marshal.h"
 #include "mrp-assignment.h"
 
+#include "mygmp.h"
+
 struct _MrpAssignmentPriv {
 	MrpTask     *task;
 	MrpResource *resource;
 
-	gint         units;
+	mpq_t         units;
 };
 
 /* Properties */
@@ -112,12 +114,9 @@ assignment_class_init (MrpAssignmentClass *klass)
 							      G_PARAM_READWRITE));
         g_object_class_install_property (object_class,
                                          PROP_UNITS,
-                                         g_param_spec_int ("units",
+                                         g_param_spec_pointer ("units",
 							   "Units",
 							   "Number of units assignment",
-							   -1,
-							   G_MAXINT,
-							   0,
 							   G_PARAM_READWRITE));
 }
 
@@ -189,7 +188,7 @@ assignment_set_property (GObject      *object,
 		break;
 
 	case PROP_UNITS:
-		priv->units = g_value_get_int (value);
+		mpq_set(priv->units, g_value_get_pointer (value));
 		mrp_object_changed (MRP_OBJECT (priv->resource));
 		break;
 
@@ -218,7 +217,7 @@ assignment_get_property (GObject    *object,
 		g_value_set_object (value, priv->resource);
 		break;
 	case PROP_UNITS:
-		g_value_set_int (value, priv->units);
+		g_value_set_pointer (value, priv->units);
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -287,10 +286,8 @@ mrp_assignment_get_resource (MrpAssignment *assignment)
  *
  * Return value: number of units of the assignment.
  **/
-gint
+mpq_struct *
 mrp_assignment_get_units (MrpAssignment *assignment)
 {
-	g_return_val_if_fail (MRP_IS_ASSIGNMENT (assignment), -1);
-
-	return assignment->priv->units;
+	return &assignment->priv->units[0];
 }

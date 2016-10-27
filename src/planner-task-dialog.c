@@ -233,8 +233,8 @@ typedef struct {
 	MrpTask       *task;
 	MrpResource   *resource;
 	MrpAssignment *assignment;
-	guint          units;
-	guint          old_units;
+	mpq_t          units;
+	mpq_t          old_units;
 } TaskCmdEditAssignment;
 
 typedef struct {
@@ -721,22 +721,22 @@ static PlannerCmd *
 task_cmd_assign_add (PlannerWindow *main_window,
 		     MrpTask       *task,
 		     MrpResource   *resource,
-		     guint          units)
+		     mpq_t          units)
 {
 	PlannerCmd             *cmd_base;
 	TaskCmdEditAssignment  *cmd;
 	MrpAssignment          *assignment;
-	guint                   old_units;
+	mpq_t                   old_units;
 
 	assignment = mrp_task_get_assignment (task, resource);
 	if (assignment) {
-		old_units = mrp_assignment_get_units (assignment);
+		mpq_set (old_units, mrp_assignment_get_units (assignment));
 
-		if (old_units == units) {
+		if (mpq_equal(old_units, units)) {
 			return NULL;
 		}
 	} else {
-		old_units = 0;
+		mpq_set_si(old_units, 0, 1);
 	}
 
 	cmd_base = planner_cmd_new (TaskCmdEditAssignment,
@@ -748,8 +748,8 @@ task_cmd_assign_add (PlannerWindow *main_window,
 	cmd = (TaskCmdEditAssignment *) cmd_base;
 	cmd->task = g_object_ref (task);
 	cmd->resource = g_object_ref (resource);
-	cmd->old_units = old_units;
-	cmd->units = units;
+	mpq_set (cmd->old_units, old_units);
+	mpq_set (cmd->units, units);
 
 	planner_cmd_manager_insert_and_do (planner_window_get_cmd_manager (main_window),
 					   cmd_base);
@@ -808,7 +808,7 @@ task_cmd_assign_remove (PlannerWindow *main_window,
 	cmd = (TaskCmdEditAssignment *) cmd_base;
 	cmd->task = g_object_ref (mrp_assignment_get_task (assignment));
 	cmd->resource = g_object_ref (mrp_assignment_get_resource (assignment));
-	cmd->units = mrp_assignment_get_units (assignment);
+	mpq_set (cmd->units, mrp_assignment_get_units (assignment));
 
 	planner_cmd_manager_insert_and_do (planner_window_get_cmd_manager (main_window),
 					   cmd_base);
@@ -853,7 +853,7 @@ task_cmd_assign_units_free (PlannerCmd *cmd_base)
 static PlannerCmd *
 task_cmd_assign_units (PlannerWindow *main_window,
 		       MrpAssignment *assignment,
-		       guint          units)
+		       mpq_t          units)
 {
 	PlannerCmd             *cmd_base;
 	TaskCmdEditAssignment  *cmd;
@@ -868,8 +868,8 @@ task_cmd_assign_units (PlannerWindow *main_window,
 	cmd->task = g_object_ref (mrp_assignment_get_task (assignment));
 	cmd->resource = g_object_ref (mrp_assignment_get_resource (assignment));
 	cmd->assignment = assignment;
-	cmd->units = units;
-	cmd->old_units = mrp_assignment_get_units (assignment);
+	mpq_set (cmd->units, units);
+	mpq_set (cmd->old_units, mrp_assignment_get_units (assignment));
 
 	planner_cmd_manager_insert_and_do (planner_window_get_cmd_manager (main_window),
 					   cmd_base);
@@ -2048,7 +2048,7 @@ task_dialog_resource_units_cell_edited (GtkCellRendererText *cell,
 	GtkTreeIter    iter;
 	MrpResource   *resource;
 	MrpAssignment *assignment;
-	int            value;
+	mpq_t            value;
 
 	tree = GTK_TREE_VIEW (data->resource_list);
 
@@ -2062,10 +2062,11 @@ task_dialog_resource_units_cell_edited (GtkCellRendererText *cell,
 
 	assignment = mrp_task_get_assignment (data->task, resource);
 	if (assignment) {
-		value = atoi (new_text);
+		// FIXME: replace atoi with strtol for error checking
+		mpq_set_si (value, atoi (new_text), 1);
 
-		if (value != mrp_assignment_get_units (assignment)) {
-			task_cmd_assign_units (data->main_window, assignment, atoi (new_text));
+		if (!mpq_equal(value, mrp_assignment_get_units (assignment))) {
+			task_cmd_assign_units (data->main_window, assignment, value);
 		}
 	}
 }
@@ -2558,7 +2559,9 @@ task_dialog_assignment_toggled_cb (GtkCellRendererText *cell,
 	resource = ((GList *)iter.user_data)->data;
 
  	if (!active) {
-		task_cmd_assign_add (data->main_window, data->task, resource, 100);
+ 		mpq_t hundred;
+ 		mpq_set_si (hundred, 100, 1);
+		task_cmd_assign_add (data->main_window, data->task, resource, hundred);
 	} else {
 		MrpAssignment *assignment;
 

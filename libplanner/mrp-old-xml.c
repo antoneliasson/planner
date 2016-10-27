@@ -362,7 +362,7 @@ old_xml_read_resource (MrpParser *parser, xmlNodePtr tree)
 	gchar       *name, *short_name, *email;
 	gchar       *note;
 	gint         gid;
-	gint         units;
+	mpq_t         units;
 	gfloat       std_rate; /*, ovt_rate;*/
 	gint         calendar_id;
 	MrpResource *resource;
@@ -379,7 +379,7 @@ old_xml_read_resource (MrpParser *parser, xmlNodePtr tree)
 	short_name  = old_xml_get_string (tree, "short-name");
 	gid         = old_xml_get_int (tree, "group");
 	type        = old_xml_get_int (tree, "type");
-	units       = old_xml_get_int (tree, "units");
+	mpq_set_si (units, old_xml_get_int (tree, "units"), 1); // FIXME
 	std_rate    = old_xml_get_float (tree, "std-rate");
 	/*ovt_rate = old_xml_get_float (tree, "ovt-rate");*/
 	email       = old_xml_get_string (tree, "email");
@@ -478,10 +478,12 @@ old_xml_read_group (MrpParser *parser, xmlNodePtr tree)
 static void
 old_xml_read_assignment (MrpParser *parser, xmlNodePtr tree)
 {
-	gint   task_id, resource_id, assigned_units;
+	gint   task_id, resource_id;
 	MrpAssignment *assignment;
 	MrpTask       *task;
 	MrpResource   *resource;
+
+	mpq_t assigned_units;
 
 	if (strcmp (tree->name, "allocation")){
 		/*g_warning ("Got %s, expected 'allocation'.", tree->name);*/
@@ -490,7 +492,7 @@ old_xml_read_assignment (MrpParser *parser, xmlNodePtr tree)
 
 	task_id = old_xml_get_int (tree, "task-id");
 	resource_id = old_xml_get_int (tree, "resource-id");
-	assigned_units = old_xml_get_int_with_default (tree, "units",100);
+	mpq_set_si (assigned_units, old_xml_get_int_with_default (tree, "units",100), 1); // FIXME
 
 	task = g_hash_table_lookup (parser->task_hash,
 				    GINT_TO_POINTER (task_id));

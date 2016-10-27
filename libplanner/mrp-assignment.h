@@ -27,6 +27,8 @@
 #include <libplanner/mrp-time.h>
 #include <libplanner/mrp-types.h>
 
+#include "mygmp.h"
+
 #define MRP_TYPE_ASSIGNMENT         (mrp_assignment_get_type ())
 #define MRP_ASSIGNMENT(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), MRP_TYPE_ASSIGNMENT, MrpAssignment))
 #define MRP_ASSIGNMENT_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST((k), MRP_TYPE_ASSIGNMENT, MrpAssignmentClass))
@@ -53,6 +55,6 @@ MrpAssignment     *mrp_assignment_new          (void);
 
 MrpTask           *mrp_assignment_get_task     (MrpAssignment *assignment);
 MrpResource       *mrp_assignment_get_resource (MrpAssignment *assignment);
-gint               mrp_assignment_get_units    (MrpAssignment *assignment);
+mpq_struct               *mrp_assignment_get_units    (MrpAssignment *assignment); // FIXME
 
 #endif /* __MRP_ASSIGNMENT_H__ */

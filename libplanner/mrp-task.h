@@ -29,6 +29,8 @@
 #include <libplanner/mrp-time.h>
 #include <libplanner/mrp-assignment.h>
 
+#include "mygmp.h"
+
 #define MRP_TYPE_TASK                   (mrp_task_get_type ())
 #define MRP_TASK(obj)                   (G_TYPE_CHECK_INSTANCE_CAST ((obj), MRP_TYPE_TASK, MrpTask))
 #define MRP_TASK_CLASS(klass)           (G_TYPE_CHECK_CLASS_CAST ((klass), MRP_TYPE_TASK, MrpTaskClass))
@@ -57,8 +59,8 @@ typedef struct {
 	gboolean is_start;
 	mrptime  start;
 	mrptime  end;
-	gint     units;
-	gint     units_full;
+	mpq_t     units;
+	mpq_t     units_full;
 	gint     res_n;
 } MrpUnitsInterval;
 

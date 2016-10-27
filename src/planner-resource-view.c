@@ -945,10 +945,10 @@ resource_cmd_remove_undo (PlannerCmd *cmd_base)
 
 	for (l = cmd->assignments; l; l = l->next) {
 		MrpTask *task;
-		guint    units;
+		mpq_t    units;
 
 		task = mrp_assignment_get_task (l->data);
-		units = mrp_assignment_get_units (l->data);
+		mpq_set (units, mrp_assignment_get_units (l->data));
 
 		mrp_resource_assign (cmd->resource, task, units);
 	}

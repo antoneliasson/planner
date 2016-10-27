@@ -24,6 +24,7 @@
 #include <config.h>
 #include <math.h>
 #include <string.h>
+#include <stdlib.h>
 #include <libplanner/mrp-project.h>
 #include <libplanner/mrp-task.h>
 #include <libplanner/mrp-resource.h>
@@ -517,14 +518,14 @@ gantt_print_get_allocated_resources_string (PlannerGanttPrintData  *data,
 	gchar         *name, *tmp_str, *name_unit;
 	gchar         *text = NULL;
 	gdouble        w = 0;
-	gint           units;
+	mpq_t           units;
 
 	assignments = mrp_task_get_assignments (task);
 	for (l = assignments; l; l = l->next) {
 		assignment = l->data;
 
 		resource = mrp_assignment_get_resource (assignment);
-		units = mrp_assignment_get_units (assignment);
+		mpq_set (units, mrp_assignment_get_units (assignment));
 
 		/* Use the resource short_name in preference to the resource
 		 * name.
@@ -547,9 +548,11 @@ gantt_print_get_allocated_resources_string (PlannerGanttPrintData  *data,
 			}
 		}
 
- 		if (units != 100) {
-			name_unit = g_strdup_printf ("%s [%i]", name, units);
-			g_free (name);
+ 		if (mpq_cmp_si (units, 100, 1)) {
+ 			tmp_str = mpq_get_str (NULL, 10, units);
+			name_unit = g_strdup_printf ("%s [%s]", name, tmp_str);
+			free (tmp_str);
+			g_free (name); // FIXME leak
 		} else {
 			name_unit = name;
 		}

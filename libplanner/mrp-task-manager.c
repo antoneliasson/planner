@@ -34,6 +34,8 @@
 #include "mrp-time.h"
 #include "mrp-error.h"
 
+#include "mygmp.h"
+
 struct _MrpTaskManagerPriv {
 	MrpProject *project;
 	MrpTask    *root;
@@ -1313,13 +1315,13 @@ units_interval_sort_func (gconstpointer a, gconstpointer b)
 }
 
 static MrpUnitsInterval *
-units_interval_new (MrpInterval *ival, gint units, gboolean is_start)
+units_interval_new (MrpInterval *ival, mpq_t units, gboolean is_start)
 {
 	MrpUnitsInterval *unit_ival;
 
 	unit_ival = g_new (MrpUnitsInterval, 1);
 	unit_ival->is_start = is_start;
-	unit_ival->units = units;
+	mpq_set(unit_ival->units, units);
 
 	mrp_interval_get_absolute (ival, 0, &unit_ival->start, &unit_ival->end);
 
@@ -1351,7 +1353,7 @@ task_manager_get_task_units_intervals (MrpTaskManager *manager,
 	MrpAssignment      *assignment;
 	MrpResource        *resource;
 	GList              *assignments, *a;
-	gint                units, units_full, units_orig;
+	mpq_t               units, units_full, units_orig;
 	mrptime             i_start, i_end;
 
 	mrptime             t;
@@ -1391,7 +1393,7 @@ task_manager_get_task_units_intervals (MrpTaskManager *manager,
 		assignment = a->data;
 
 		resource = mrp_assignment_get_resource (assignment);
-		units_orig = mrp_assignment_get_units (assignment);
+		mpq_set (units_orig, mrp_assignment_get_units (assignment));
 
 		calendar = mrp_resource_get_calendar (resource);
 		if (!calendar) {
@@ -1403,7 +1405,7 @@ task_manager_get_task_units_intervals (MrpTaskManager *manager,
 		for (l = ivals; l; l = l->next) {
 			ival = l->data;
 			mrp_interval_get_absolute (ival, date, &i_start, &i_end);
-			units = units_orig;
+			mpq_set (units, units_orig);
 
 #ifdef WITH_SIMPLE_PRIORITY_SCHEDULING
 			for (v_l = v_tasks; v_l; v_l = v_l->next) {
@@ -1505,11 +1507,11 @@ task_manager_get_task_units_intervals (MrpTaskManager *manager,
 #endif /* ifdef WITH_SIMPLE_PRIORITY_SCHEDULING */
 			/* Start of the interval. */
 				unit_ival_start = units_interval_new (ival, units, TRUE);
-				unit_ival_start->units_full = units;
+				mpq_set (unit_ival_start->units_full, units);
 
 			/* End of the interval. */
 				unit_ival_end = units_interval_new (ival, units, FALSE);
-				unit_ival_end->units_full = units;
+				mpq_set (unit_ival_end->units_full, units);
 
 				g_ptr_array_add (array, unit_ival_start);
 				g_ptr_array_add (array, unit_ival_end);
@@ -1529,16 +1531,18 @@ task_manager_get_task_units_intervals (MrpTaskManager *manager,
 		ivals = mrp_calendar_day_get_intervals (calendar, day, TRUE);
 
 		for (l = ivals; l; l = l->next) {
+			mpq_t hundred;
+			mpq_set_si (hundred, 100, 1);
 			ival = l->data;
 
 			/* Start of the interval. */
-			unit_ival = units_interval_new (ival, 100, TRUE);
-			unit_ival->units_full = 100;
+			unit_ival = units_interval_new (ival, hundred, TRUE);
+			mpq_set_si (unit_ival->units_full, 100, 1);
 			g_ptr_array_add (array, unit_ival);
 
 			/* End of the interval. */
-			unit_ival = units_interval_new (ival, 100, FALSE);
-			unit_ival->units_full = 100;
+			unit_ival = units_interval_new (ival, hundred, FALSE);
+			mpq_set_si (unit_ival->units_full, 100, 1);
 			g_ptr_array_add (array, unit_ival);
 		}
 	}
@@ -1606,8 +1610,8 @@ task_manager_get_task_units_intervals (MrpTaskManager *manager,
 
 
 	poc = -1;
-	units = 0;
-	units_full = 0;
+	mpq_set_si (units, 0, 1);
+	mpq_set_si (units_full, 0, 1);
 	res_n = 0;
 	for (i = 0; i < len; i++) {
 		unit_ival = g_ptr_array_index (array, i);
@@ -1621,8 +1625,8 @@ task_manager_get_task_units_intervals (MrpTaskManager *manager,
 			 */
 			if (poc != -1) {
 				new_unit_ival = g_new (MrpUnitsInterval, 1);
-				new_unit_ival->units = units;
-				new_unit_ival->units_full = units_full;
+				mpq_set (new_unit_ival->units, units);
+				mpq_set (new_unit_ival->units_full, units_full);
 				new_unit_ival->start = poc;
 				new_unit_ival->end = t;
 				new_unit_ival->res_n = res_n;
@@ -1634,14 +1638,14 @@ task_manager_get_task_units_intervals (MrpTaskManager *manager,
 		}
 
 		if (unit_ival->is_start) {
-			units += unit_ival->units;
-			units_full += unit_ival->units_full;
+			mpq_add (units, units, unit_ival->units);
+			mpq_add (units_full, units_full, unit_ival->units_full);
 			if (assignments) {
 				res_n++;
 			}
 		} else {
-			units -= unit_ival->units;
-			units_full -= unit_ival->units_full;
+			mpq_sub (units, units, unit_ival->units);
+			mpq_sub (units_full, units_full, unit_ival->units_full);
 		}
 	}
 
@@ -2046,7 +2050,6 @@ task_manager_do_forward_pass_helper (MrpTaskManager *manager,
 	mrptime             new_start, new_finish;
 	gint                duration;
 	gint                old_duration;
-	gint                work;
 	mrptime             t1, t2;
 	MrpTaskSched        sched;
 
@@ -2061,7 +2064,7 @@ task_manager_do_forward_pass_helper (MrpTaskManager *manager,
 		sub_start = -1;
 		sub_work_start = -1;
 		sub_finish = -1;
-		work = 0;
+		gint work = 0;
 
 		child = mrp_task_get_first_child (task);
 		while (child) {
@@ -2113,18 +2116,22 @@ task_manager_do_forward_pass_helper (MrpTaskManager *manager,
 			imrp_task_set_duration (task, duration);
 		} else {
 			duration = mrp_task_get_duration (task);
-			work = mrp_task_get_work (task);
 
 			/* Update resource units for fixed duration. */
 			if (duration > 0) {
 				GList         *assignments, *a;
 				MrpAssignment *assignment;
-				gint           n, units;
+				mpq_t n, dur, units, work;
 
 				assignments = mrp_task_get_assignments (task);
 
-				n = g_list_length (assignments);
-				units = floor (100.0 * (gdouble) work / duration / n);
+				mpq_set_si (n, g_list_length (assignments), 1);
+				mpq_set_si (dur, duration, 1);
+				mpq_set_si (units, 100, 1);
+				mpq_set_si (work, mrp_task_get_work (task), 1);
+				mpq_mul (units, units, work);
+				mpq_div (units, units, dur);
+				mpq_div (units, units, n);
 
 				for (a = assignments; a; a = a->next) {
 					assignment = a->data;
