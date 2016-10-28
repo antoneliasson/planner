@@ -36,15 +36,21 @@ char *mpq_get_str(char *unused, int base, const mpq_t op)
 		g_warning("not implemented");
 	}
 	int size = 0;
+	char *fmt;
 	char *p = NULL;
 
-	size = snprintf(p, 0, "%d/%d", op->p, op->q);
+	if (op->q == 1) {
+		fmt = "%d";
+	} else {
+		fmt = "%d/%d";
+	}
+	size = snprintf(p, 0, fmt, op->p, op->q);
 	if (size < 0)
 		return NULL;
 
 	size++;
 	p = malloc(size);
-	size = snprintf(p, size, "%d/%d", op->p, op->q);
+	size = snprintf(p, size, fmt, op->p, op->q);
 	if (size < 0) {
 		free(p);
 		return NULL;
