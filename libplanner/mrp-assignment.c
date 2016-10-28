@@ -286,7 +286,7 @@ mrp_assignment_get_resource (MrpAssignment *assignment)
  *
  * Return value: number of units of the assignment.
  **/
-mpq_struct *
+ratnum_t *
 mrp_assignment_get_units (MrpAssignment *assignment)
 {
 	return &assignment->priv->units[0];

@@ -3,9 +3,9 @@
 typedef struct {
 	int p;
 	int q;
-} mpq_struct;
+} ratnum_t;
 
-typedef mpq_struct mpq_t[1];
+typedef ratnum_t mpq_t[1];
 
 void mpq_canonicalize (mpq_t op);
 char *mpq_get_str(char *unused, int base, const mpq_t op);

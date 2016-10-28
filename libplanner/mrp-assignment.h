@@ -55,6 +55,6 @@ MrpAssignment     *mrp_assignment_new          (void);
 
 MrpTask           *mrp_assignment_get_task     (MrpAssignment *assignment);
 MrpResource       *mrp_assignment_get_resource (MrpAssignment *assignment);
-mpq_struct               *mrp_assignment_get_units    (MrpAssignment *assignment); // FIXME
+ratnum_t               *mrp_assignment_get_units    (MrpAssignment *assignment); // FIXME
 
 #endif /* __MRP_ASSIGNMENT_H__ */
