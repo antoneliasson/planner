@@ -127,3 +127,8 @@ void mpq_mul (mpq_t product, const mpq_t multiplier, const mpq_t multiplicand)
 	product->q = multiplier->q * multiplicand->q;
 	mpq_canonicalize(product);
 }
+
+double mpq_get_d (const mpq_t op)
+{
+	return (double) op->p / op->q;
+}

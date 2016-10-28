@@ -23,3 +23,10 @@ static inline int mpq_equal (const mpq_t op1, const mpq_t op2)
 {
 	return !mpq_cmp(op1, op2);
 }
+
+static inline int mpq_is_zero (const mpq_t op)
+{
+	return !mpq_cmp_si(op, 0, 1);
+}
+
+double mpq_get_d (const mpq_t op);
