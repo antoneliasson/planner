@@ -1746,9 +1746,9 @@ task_manager_calculate_task_finish (MrpTaskManager *manager,
 	mrptime             t;
 	mrptime             t1, t2;
 	mrptime             work_start;
-	gint                work;
-	gint                effort;
-	gint                delta;
+	mpq_t                work;
+	mpq_t                effort;
+	mpq_t                delta;
 	GList              *unit_ivals, *unit_ivals_tot = NULL, *l = NULL;
 	MrpUnitsInterval   *unit_ival;
 	MrpTaskType         type;
@@ -1769,7 +1769,7 @@ task_manager_calculate_task_finish (MrpTaskManager *manager,
 		return start;
 	}
 
-	work = mrp_task_get_work (task);
+	mpq_set_si (work, mrp_task_get_work (task), 1);
 	sched = mrp_task_get_sched (task);
 
 	if (sched == MRP_TASK_SCHED_FIXED_WORK) {
@@ -1778,7 +1778,7 @@ task_manager_calculate_task_finish (MrpTaskManager *manager,
 		*duration = mrp_task_get_duration (task);
 	}
 
-	effort = 0;
+	mpq_set_si (effort, 0, 1);
 
 	finish = start;
 	work_start = -1;
@@ -1792,7 +1792,7 @@ task_manager_calculate_task_finish (MrpTaskManager *manager,
 		 * be broken, so we abort the scheduling of this task. It's not
 		 * the best solution but fixes the issue for now.
 		 */
-		if (effort == 0 && t - start > (60*60*24*100)) {
+		if (mpq_is_zero (effort) && t - start > (60*60*24*100)) {
 			break;
 		}
 
@@ -1803,6 +1803,7 @@ task_manager_calculate_task_finish (MrpTaskManager *manager,
 		}
 
 		for (l = unit_ivals; l; l = l->next) {
+			mpq_t tmp, t1_, t2_;
 			unit_ival = l->data;
 
 			t1 = t + unit_ival->start;
@@ -1823,22 +1824,44 @@ task_manager_calculate_task_finish (MrpTaskManager *manager,
 				work_start = t1;
 			}
 
+			mpq_set_si (t1_, t1, 1);
+			mpq_set_si (t2_, t2, 1);
+
 			/* Effort added by this interval. */
 			if (sched == MRP_TASK_SCHED_FIXED_WORK) {
-				delta = floor (0.5 + (double) unit_ival->units * (t2 - t1) / 100.0);
+				mpq_t hundred;
+				mpq_set_si (hundred, 100, 1);
+				mpq_sub (tmp, t2_, t1_);
+				mpq_mul (delta, unit_ival->units, tmp);
+				mpq_div (delta, delta, hundred);
 
 				if (unit_ival->units_full > 0) {
 					*duration += (t2 - t1);
 				}
 
-				if (effort + delta >= work) {
+				mpq_add (tmp, effort, delta);
+				if (mpq_cmp (tmp, work) >= 0) {
 					/* Subtract the spill to duration. */
 					if (unit_ival->units) {
-						finish = t1 + floor (0.5 + (work - effort) / unit_ival->units * 100.0);
-						*duration -= floor (0.5 + (effort + delta - work) / unit_ival->units * 100.0);
+						mpq_sub (tmp, work, effort);
+						mpq_mul (tmp, tmp, hundred);
+						mpq_div (tmp, tmp, unit_ival->units);
+						finish = t1 + round (mpq_get_d (tmp));
+						//finish = t1 + round ((work - effort) * 100.0 / unit_ival->units);
+						mpq_add (tmp, effort, delta);
+						mpq_sub (tmp, tmp, work);
+						mpq_mul (tmp, tmp, hundred);
+						mpq_div (tmp, tmp, unit_ival->units);
+						*duration -= round (mpq_get_d (tmp));
+						//*duration -= round ((effort + delta - work) * 100.0 / unit_ival->units);
 					} else {
-						finish = t1 + floor (work - effort);
-						*duration -= floor (0.5 + (effort + delta - work));
+						mpq_sub (tmp, work, effort);
+						finish = t1 + floor (mpq_get_d (tmp));
+						//finish = t1 + floor (work - effort);
+						mpq_add (tmp, effort, delta);
+						mpq_sub (tmp, tmp, work);
+						*duration -= round (mpq_get_d (tmp));
+						//*duration -= floor (0.5 + (effort + delta - work));
 					}
 
 					unit_ival->start = t1;
@@ -1851,21 +1874,20 @@ task_manager_calculate_task_finish (MrpTaskManager *manager,
 				unit_ivals_tot = g_list_prepend (unit_ivals_tot, unit_ival);
 			}
 			else if (sched == MRP_TASK_SCHED_FIXED_DURATION) {
-				delta = t2 - t1;
-
+				mpq_sub (delta, t2_, t1_);
+				mpq_add (tmp, effort, delta);
 				if (unit_ival->units_full == 0) {
-					delta = 0;
-				} else if (effort + delta >= *duration) {
+					mpq_set_si (delta, 0, 1);
+				} else if (mpq_cmp_si (tmp, *duration, 1) >= 0) {
 					/* Done, make sure we don't spill. */
-					finish = t1 + *duration - effort;
+					finish = t1 + *duration - mpq_get_d (effort);
 					goto done;
 				}
 			} else {
-				delta = 0;
 				g_assert_not_reached ();
 			}
 
-			effort += delta;
+			mpq_add (effort, effort, delta);
 		}
 		t += 60*60*24;
 	}
