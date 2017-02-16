@@ -2011,15 +2011,15 @@ task_manager_calculate_task_start_from_finish (MrpTaskManager *manager,
 
 			/* Effort added by this interval. */
 			if (sched == MRP_TASK_SCHED_FIXED_WORK) {
-				delta = floor (0.5 + (double) unit_ival->units * (t2 - t1) / 100.0);
-
+				//delta = floor (0.5 + (double) unit_ival->units * (t2 - t1) / 100.0);
+delta=0;
 				*duration += (t2 - t1);
 
 				if (effort + delta >= work) {
 					/* Subtract the spill to duration. */
 					if (unit_ival->units) {
-						start = t2 - floor (0.5 + (work - effort) / unit_ival->units * 100.0);
-						*duration -= floor (0.5 + (effort + delta - work) / unit_ival->units * 100.0);
+						//start = t2 - floor (0.5 + (work - effort) / unit_ival->units * 100.0);
+						//*duration -= floor (0.5 + (effort + delta - work) / unit_ival->units * 100.0);
 					} else {
 						start = t2 - floor (0.5 + (work - effort));
 						*duration -= floor (0.5 + (effort + delta - work));
@@ -2154,6 +2154,8 @@ task_manager_do_forward_pass_helper (MrpTaskManager *manager,
 				mpq_mul (units, units, work);
 				mpq_div (units, units, dur);
 				mpq_div (units, units, n);
+
+				g_print ("units = %s\n", mpq_get_str(NULL, 10, units));
 
 				for (a = assignments; a; a = a->next) {
 					assignment = a->data;
@@ -2791,7 +2793,7 @@ task_manager_get_work_for_task_with_assignments (MrpTaskManager *manager,
 				break;
 			}
 
-			delta = floor (0.5 + (double) ival->units * (t2 - t1) / 100.0);
+			//delta = floor (0.5 + (double) ival->units * (t2 - t1) / 100.0);
 
 			work += delta;
 		}

@@ -1587,7 +1587,7 @@ gantt_row_draw (GnomeCanvasItem *item,
 				/* Draw area. */
 				wunits_draw_it = TRUE;
 				if (unit_ival->res_n > 0 && unit_ival->units_full > 0) {
-					delta = (double)unit_ival->units / (double)unit_ival->units_full;
+					//delta = (double)unit_ival->units / (double)unit_ival->units_full;
 				}
 				else {
 					if (unit_ival->res_n == 0) {  /* It is a nonworking interval. */

@@ -1810,7 +1810,7 @@ mrp_task_get_cost (MrpTask *task)
 			resource = mrp_assignment_get_resource (l->data);
 
 			mrp_object_get (resource, "cost", &cost, NULL);
-			total += mrp_assignment_get_units (l->data) * priv->duration * cost / (3600.0 * 100);
+			//total += mrp_assignment_get_units (l->data) * priv->duration * cost / (3600.0 * 100);
 		}
 	}
 
